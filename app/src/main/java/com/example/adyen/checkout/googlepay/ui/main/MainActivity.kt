@@ -1,4 +1,4 @@
-package com.example.adyen.checkout.googlepay.ui
+package com.example.adyen.checkout.googlepay.ui.main
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
