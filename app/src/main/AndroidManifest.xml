@@ -25,6 +25,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.googlepay.GooglePayActivity"
+            android:exported="true"
+            android:launchMode="singleTop" />
+
     </application>
 
 </manifest>
