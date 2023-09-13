@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.adyen.checkout.components.core.ComponentError
 import com.adyen.checkout.components.core.PaymentMethodTypes
 import com.adyen.checkout.googlepay.GooglePayConfiguration
+import com.adyen.checkout.googlepay.MerchantInfo
 import com.adyen.checkout.sessions.core.CheckoutSession
 import com.adyen.checkout.sessions.core.CheckoutSessionProvider
 import com.adyen.checkout.sessions.core.CheckoutSessionResult
@@ -70,10 +71,11 @@ class GooglePayViewModel(
 
     private fun getGooglePayConfiguration(sessionApiModel: SessionApiModel): GooglePayConfiguration {
         return GooglePayConfiguration.Builder(
-            shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
-            environment = sessionApiModel.environment.mapToEnvironment(),
-            clientKey = sessionApiModel.clientSecret,
-        ).build()
+                shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
+                environment = sessionApiModel.environment.mapToEnvironment(),
+                clientKey = sessionApiModel.clientSecret)
+            .setMerchantInfo(MerchantInfo().apply {merchantName = "Test merchant"})
+            .build()
     }
 
     private suspend fun getCheckoutSession(sessionApiModel: SessionApiModel, googlePayConfiguration: GooglePayConfiguration): CheckoutSession? {
