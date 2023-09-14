@@ -82,6 +82,7 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
         googlePayComponent?.handleAction(action, this)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != GOOGLE_PAY_REQUEST_CODE) return

@@ -33,7 +33,7 @@ class GooglePayViewModel(
     }
 
     private suspend fun launchComponent() {
-        val sessionApiModel = getSession()
+        val sessionApiModel = getSessionFromNetwork()
         if (sessionApiModel == null) {
             _googlePayViewState.emit(GooglePayViewState.ShowStatusText(R.string.error_google_pay))
             return
@@ -63,7 +63,7 @@ class GooglePayViewModel(
         )
     }
 
-    private suspend fun getSession(): SessionApiModel? {
+    private suspend fun getSessionFromNetwork(): SessionApiModel? {
         return safeApiCall {
             checkoutService.getSession()
         }
@@ -71,10 +71,11 @@ class GooglePayViewModel(
 
     private fun getGooglePayConfiguration(sessionApiModel: SessionApiModel): GooglePayConfiguration {
         return GooglePayConfiguration.Builder(
-                shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
-                environment = sessionApiModel.environment.mapToEnvironment(),
-                clientKey = sessionApiModel.clientSecret)
-            .setMerchantInfo(MerchantInfo().apply {merchantName = "Test merchant"})
+            shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
+            environment = sessionApiModel.environment.mapToEnvironment(),
+            clientKey = sessionApiModel.clientSecret
+        )
+            .setMerchantInfo(MerchantInfo(merchantName = "Test merchant"))
             .build()
     }
 
@@ -84,13 +85,6 @@ class GooglePayViewModel(
             sessionData = sessionApiModel.sessionData,
         )
 
-        return getCheckoutSession(sessionModel, googlePayConfiguration)
-    }
-
-    private suspend fun getCheckoutSession(
-        sessionModel: SessionModel,
-        googlePayConfiguration: GooglePayConfiguration,
-    ): CheckoutSession? {
         return when (val result = CheckoutSessionProvider.createSession(sessionModel, googlePayConfiguration)) {
             is CheckoutSessionResult.Success -> result.checkoutSession
             is CheckoutSessionResult.Error -> null
