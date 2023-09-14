@@ -14,7 +14,7 @@
         tools:targetApi="34">
 
         <activity
-            android:name=".ui.main.MainActivity"
+            android:name=".ui.googlepay.GooglePayActivity"
             android:exported="true"
             android:launchMode="singleTop">
 
@@ -24,11 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".ui.googlepay.GooglePayActivity"
-            android:exported="true"
-            android:launchMode="singleTop" />
 
     </application>
 
