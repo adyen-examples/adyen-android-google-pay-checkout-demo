@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Google Pay Checkout Example</string>
     <string name="error_google_pay">Google Pay has encountered an error</string>
-    <string name="start_google_pay_button_text">Start Google Pay</string>
+    <string name="pay">Pay</string>
     <string name="payment_successful">Your payment was successful 🎉</string>
+    <string name="error_google_pay_unavailable">Google Pay is unavailable on your device</string>
 </resources>

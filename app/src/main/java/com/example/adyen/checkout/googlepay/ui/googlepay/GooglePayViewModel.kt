@@ -32,11 +32,13 @@ class GooglePayViewModel(
     private val _events = MutableSharedFlow<GooglePayEvent>()
     val events: Flow<GooglePayEvent> = _events
 
+    private var googlePayComponentData: GooglePayComponentData? = null
+
     init {
-        viewModelScope.launch { launchComponent() }
+        viewModelScope.launch { checkGooglePayAvailability() }
     }
 
-    private suspend fun launchComponent() {
+    private suspend fun checkGooglePayAvailability() {
         val sessionApiModel = getSessionFromNetwork()
         if (sessionApiModel == null) {
             _googlePayViewState.emit(GooglePayViewState.ShowStatusText(R.string.error_google_pay))
@@ -56,17 +58,13 @@ class GooglePayViewModel(
             return
         }
 
-        val googlePayComponentData = GooglePayComponentData(
+        _events.emit(GooglePayEvent.CheckGooglePayAvailability(paymentMethod, googlePayConfiguration))
+
+        googlePayComponentData = GooglePayComponentData(
             checkoutSession = checkoutSession,
             paymentMethod = paymentMethod,
             googlePayConfiguration = googlePayConfiguration,
         )
-
-        _googlePayViewState.emit(
-            GooglePayViewState.LoadComponent(googlePayComponentData)
-        )
-
-        _events.emit(GooglePayEvent.StartGooglePay)
     }
 
     private suspend fun getSessionFromNetwork(): SessionApiModel? {
@@ -94,6 +92,22 @@ class GooglePayViewModel(
         return when (val result = CheckoutSessionProvider.createSession(sessionModel, googlePayConfiguration)) {
             is CheckoutSessionResult.Success -> result.checkoutSession
             is CheckoutSessionResult.Error -> null
+        }
+    }
+
+    fun onGooglePayAvailabilityResult(isAvailable: Boolean) {
+        if (isAvailable) {
+            val googlePayComponentData = googlePayComponentData ?: return
+            _googlePayViewState.value = GooglePayViewState.LoadComponent(googlePayComponentData)
+        } else {
+            _googlePayViewState.value = GooglePayViewState.ShowStatusText(R.string.error_google_pay_unavailable)
+
+        }
+    }
+
+    fun onGooglePayButtonClicked() {
+        viewModelScope.launch {
+            _events.emit(GooglePayEvent.StartGooglePay)
         }
     }
 
