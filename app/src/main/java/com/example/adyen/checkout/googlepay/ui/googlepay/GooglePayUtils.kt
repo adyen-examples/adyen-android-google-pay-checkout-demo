@@ -14,13 +14,24 @@ object GooglePayUtils {
         return JSONObject().apply {
             put("type", "CARD")
             put("parameters", getParameters())
+            put("tokenizationSpecification", gatewayTokenizationSpecification())
         }
     }
 
     private fun getParameters(): JSONObject {
         return JSONObject().apply {
-            put("allowedAuthMethods", listOf("PAN_ONLY", "CRYPTOGRAM_3DS"))
-            put("allowedCardNetworks", listOf("AMEX", "DISCOVER", "INTERAC", "JCB", "MASTERCARD", "VISA"))
+            put("allowedAuthMethods", JSONArray(listOf("PAN_ONLY", "CRYPTOGRAM_3DS")))
+            put("allowedCardNetworks", JSONArray(listOf("AMEX", "DISCOVER", "INTERAC", "JCB", "MASTERCARD", "VISA")))
+        }
+    }
+
+    private fun gatewayTokenizationSpecification(): JSONObject {
+        return JSONObject().apply {
+            put("type", "PAYMENT_GATEWAY")
+            put("parameters", JSONObject(mapOf(
+                "gateway" to "adyen",
+                "gatewayMerchantId" to "exampleGatewayMerchantId"
+            )))
         }
     }
 }
