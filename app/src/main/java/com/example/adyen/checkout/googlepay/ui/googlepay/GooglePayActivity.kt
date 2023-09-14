@@ -8,16 +8,23 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.adyen.checkout.components.core.ComponentAvailableCallback
 import com.adyen.checkout.components.core.ComponentError
+import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.components.core.action.Action
 import com.adyen.checkout.googlepay.GooglePayComponent
 import com.adyen.checkout.googlepay.GooglePayComponentState
+import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.sessions.core.SessionComponentCallback
 import com.adyen.checkout.sessions.core.SessionPaymentResult
 import com.example.adyen.checkout.googlepay.databinding.ActivityGooglePayBinding
+import com.google.android.gms.wallet.button.ButtonConstants
+import com.google.android.gms.wallet.button.ButtonOptions
 import kotlinx.coroutines.launch
 
-class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePayComponentState> {
+class GooglePayActivity : AppCompatActivity(),
+    SessionComponentCallback<GooglePayComponentState>,
+    ComponentAvailableCallback {
 
     private lateinit var binding: ActivityGooglePayBinding
 
@@ -30,10 +37,26 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
         binding = ActivityGooglePayBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initializePayButton()
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { googlePayViewModel.googlePayViewState.collect(::onViewState) }
+                launch { googlePayViewModel.events.collect(::onEvent) }
             }
+        }
+    }
+
+    private fun initializePayButton() {
+        binding.payButton.initialize(
+            ButtonOptions.newBuilder()
+                .setButtonType(ButtonConstants.ButtonType.PAY)
+                .setAllowedPaymentMethods(GooglePayUtils.getAllowedPaymentMethods())
+                .build()
+        )
+
+        binding.payButton.setOnClickListener {
+            googlePayViewModel.onGooglePayButtonClicked()
         }
     }
 
@@ -42,17 +65,20 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
             is GooglePayViewState.LoadComponent -> {
                 binding.progressIndicator.isVisible = false
                 binding.statusTextView.isVisible = false
+                binding.payButton.isVisible = true
                 loadComponent(googlePayViewState.googlePayComponentData)
             }
 
             is GooglePayViewState.Loading -> {
                 binding.progressIndicator.isVisible = true
                 binding.statusTextView.isVisible = false
+                binding.payButton.isVisible = false
             }
 
             is GooglePayViewState.ShowStatusText -> {
                 binding.statusTextView.isVisible = true
                 binding.progressIndicator.isVisible = false
+                binding.payButton.isVisible = false
                 binding.statusTextView.setText(googlePayViewState.textResId)
             }
         }
@@ -65,9 +91,35 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
             paymentMethod = googlePayComponentData.paymentMethod,
             configuration = googlePayComponentData.googlePayConfiguration,
             componentCallback = this,
-        ).apply {
-            startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
+        )
+    }
+
+    private fun onEvent(googlePayEvent: GooglePayEvent) {
+        when (googlePayEvent) {
+            is GooglePayEvent.CheckGooglePayAvailability -> {
+                checkAvailability(
+                    googlePayEvent.paymentMethod,
+                    googlePayEvent.configuration,
+                )
+            }
+
+            GooglePayEvent.StartGooglePay -> {
+                googlePayComponent?.startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
+            }
         }
+    }
+
+    private fun checkAvailability(paymentMethod: PaymentMethod, googlePayConfiguration: GooglePayConfiguration) {
+        GooglePayComponent.PROVIDER.isAvailable(
+            applicationContext = application,
+            paymentMethod = paymentMethod,
+            configuration = googlePayConfiguration,
+            callback = this,
+        )
+    }
+
+    override fun onAvailabilityResult(isAvailable: Boolean, paymentMethod: PaymentMethod) {
+        googlePayViewModel.onGooglePayAvailabilityResult(isAvailable)
     }
 
     override fun onFinished(result: SessionPaymentResult) {

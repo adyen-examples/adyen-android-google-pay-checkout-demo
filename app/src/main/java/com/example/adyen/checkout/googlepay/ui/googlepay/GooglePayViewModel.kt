@@ -18,6 +18,7 @@ import com.example.adyen.checkout.googlepay.data.model.SessionApiModel
 import com.example.adyen.checkout.googlepay.data.provider.CheckoutServiceProvider
 import java.util.Locale
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -28,11 +29,16 @@ class GooglePayViewModel(
     private val _googlePayViewState = MutableStateFlow<GooglePayViewState>(GooglePayViewState.Loading)
     val googlePayViewState: Flow<GooglePayViewState> = _googlePayViewState
 
+    private val _events = MutableSharedFlow<GooglePayEvent>()
+    val events: Flow<GooglePayEvent> = _events
+
+    private var googlePayComponentData: GooglePayComponentData? = null
+
     init {
-        viewModelScope.launch { launchComponent() }
+        viewModelScope.launch { checkGooglePayAvailability() }
     }
 
-    private suspend fun launchComponent() {
+    private suspend fun checkGooglePayAvailability() {
         val sessionApiModel = getSessionFromNetwork()
         if (sessionApiModel == null) {
             _googlePayViewState.emit(GooglePayViewState.ShowStatusText(R.string.error_google_pay))
@@ -52,14 +58,12 @@ class GooglePayViewModel(
             return
         }
 
-        val googlePayComponentData = GooglePayComponentData(
+        _events.emit(GooglePayEvent.CheckGooglePayAvailability(paymentMethod, googlePayConfiguration))
+
+        googlePayComponentData = GooglePayComponentData(
             checkoutSession = checkoutSession,
             paymentMethod = paymentMethod,
             googlePayConfiguration = googlePayConfiguration,
-        )
-
-        _googlePayViewState.emit(
-            GooglePayViewState.LoadComponent(googlePayComponentData)
         )
     }
 
@@ -88,6 +92,22 @@ class GooglePayViewModel(
         return when (val result = CheckoutSessionProvider.createSession(sessionModel, googlePayConfiguration)) {
             is CheckoutSessionResult.Success -> result.checkoutSession
             is CheckoutSessionResult.Error -> null
+        }
+    }
+
+    fun onGooglePayAvailabilityResult(isAvailable: Boolean) {
+        if (isAvailable) {
+            val googlePayComponentData = googlePayComponentData ?: return
+            _googlePayViewState.value = GooglePayViewState.LoadComponent(googlePayComponentData)
+        } else {
+            _googlePayViewState.value = GooglePayViewState.ShowStatusText(R.string.error_google_pay_unavailable)
+
+        }
+    }
+
+    fun onGooglePayButtonClicked() {
+        viewModelScope.launch {
+            _events.emit(GooglePayEvent.StartGooglePay)
         }
     }
 
