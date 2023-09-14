@@ -18,6 +18,7 @@ import com.example.adyen.checkout.googlepay.data.model.SessionApiModel
 import com.example.adyen.checkout.googlepay.data.provider.CheckoutServiceProvider
 import java.util.Locale
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -27,6 +28,9 @@ class GooglePayViewModel(
 
     private val _googlePayViewState = MutableStateFlow<GooglePayViewState>(GooglePayViewState.Loading)
     val googlePayViewState: Flow<GooglePayViewState> = _googlePayViewState
+
+    private val _events = MutableSharedFlow<GooglePayEvent>()
+    val events: Flow<GooglePayEvent> = _events
 
     init {
         viewModelScope.launch { launchComponent() }
@@ -61,6 +65,8 @@ class GooglePayViewModel(
         _googlePayViewState.emit(
             GooglePayViewState.LoadComponent(googlePayComponentData)
         )
+
+        _events.emit(GooglePayEvent.StartGooglePay)
     }
 
     private suspend fun getSessionFromNetwork(): SessionApiModel? {

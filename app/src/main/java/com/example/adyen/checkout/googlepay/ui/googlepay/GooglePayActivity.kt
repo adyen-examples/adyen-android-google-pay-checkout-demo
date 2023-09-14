@@ -33,6 +33,7 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { googlePayViewModel.googlePayViewState.collect(::onViewState) }
+                launch { googlePayViewModel.events.collect(::onEvent) }
             }
         }
     }
@@ -65,8 +66,14 @@ class GooglePayActivity : AppCompatActivity(), SessionComponentCallback<GooglePa
             paymentMethod = googlePayComponentData.paymentMethod,
             configuration = googlePayComponentData.googlePayConfiguration,
             componentCallback = this,
-        ).apply {
-            startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
+        )
+    }
+
+    private fun onEvent(googlePayEvent: GooglePayEvent) {
+        when (googlePayEvent) {
+            GooglePayEvent.StartGooglePay -> {
+                googlePayComponent?.startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
+            }
         }
     }
 
