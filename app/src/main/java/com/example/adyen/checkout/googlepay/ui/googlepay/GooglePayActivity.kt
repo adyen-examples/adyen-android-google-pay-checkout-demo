@@ -18,6 +18,8 @@ import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.sessions.core.SessionComponentCallback
 import com.adyen.checkout.sessions.core.SessionPaymentResult
 import com.example.adyen.checkout.googlepay.databinding.ActivityGooglePayBinding
+import com.google.android.gms.wallet.button.ButtonConstants
+import com.google.android.gms.wallet.button.ButtonOptions
 import kotlinx.coroutines.launch
 
 class GooglePayActivity : AppCompatActivity(),
@@ -35,15 +37,26 @@ class GooglePayActivity : AppCompatActivity(),
         binding = ActivityGooglePayBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.payButton.setOnClickListener {
-            googlePayViewModel.onGooglePayButtonClicked()
-        }
+        initializePayButton()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { googlePayViewModel.googlePayViewState.collect(::onViewState) }
                 launch { googlePayViewModel.events.collect(::onEvent) }
             }
+        }
+    }
+
+    private fun initializePayButton() {
+        binding.payButton.initialize(
+            ButtonOptions.newBuilder()
+                .setButtonType(ButtonConstants.ButtonType.PAY)
+                .setAllowedPaymentMethods(GooglePayUtils.getAllowedPaymentMethods())
+                .build()
+        )
+
+        binding.payButton.setOnClickListener {
+            googlePayViewModel.onGooglePayButtonClicked()
         }
     }
 
