@@ -13,6 +13,10 @@
         android:theme="@style/Theme.GooglePayCheckoutExample"
         tools:targetApi="34">
 
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
+
         <activity
             android:name=".ui.googlepay.GooglePayActivity"
             android:exported="true"
