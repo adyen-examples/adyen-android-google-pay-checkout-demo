@@ -9,6 +9,4 @@ sealed class GooglePayEvent {
         val paymentMethod: PaymentMethod,
         val configuration: GooglePayConfiguration,
     ) : GooglePayEvent()
-
-    object StartGooglePay : GooglePayEvent()
 }

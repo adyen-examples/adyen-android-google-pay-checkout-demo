@@ -105,12 +105,6 @@ class GooglePayViewModel(
         }
     }
 
-    fun onGooglePayButtonClicked() {
-        viewModelScope.launch {
-            _events.emit(GooglePayEvent.StartGooglePay)
-        }
-    }
-
     fun onComponentFinished(result: SessionPaymentResult) {
         _googlePayViewState.value = GooglePayViewState.ShowStatusText(R.string.payment_successful)
     }
