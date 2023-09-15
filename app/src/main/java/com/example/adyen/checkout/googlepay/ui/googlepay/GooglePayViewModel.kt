@@ -79,7 +79,7 @@ class GooglePayViewModel(
             environment = sessionApiModel.environment.mapToEnvironment(),
             clientKey = sessionApiModel.clientSecret
         )
-            .setMerchantInfo(MerchantInfo(merchantName = "Test merchant"))
+            .setMerchantInfo(MerchantInfo(merchantName = sessionApiModel.merchantName))
             .build()
     }
 

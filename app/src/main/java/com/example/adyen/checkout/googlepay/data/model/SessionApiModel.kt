@@ -4,6 +4,7 @@ data class SessionApiModel(
     val clientSecret: String,
     val environment: CheckoutEnvironment,
     val shopperLocale: String,
+    val merchantName: String,
     val id: String,
     val sessionData: String,
 )
