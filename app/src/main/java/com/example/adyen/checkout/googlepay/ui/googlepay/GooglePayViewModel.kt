@@ -5,25 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.adyen.checkout.components.core.ComponentError
 import com.adyen.checkout.components.core.PaymentMethodTypes
 import com.adyen.checkout.googlepay.GooglePayConfiguration
-import com.adyen.checkout.googlepay.MerchantInfo
 import com.adyen.checkout.sessions.core.CheckoutSession
 import com.adyen.checkout.sessions.core.CheckoutSessionProvider
 import com.adyen.checkout.sessions.core.CheckoutSessionResult
 import com.adyen.checkout.sessions.core.SessionModel
 import com.adyen.checkout.sessions.core.SessionPaymentResult
 import com.example.adyen.checkout.googlepay.R
-import com.example.adyen.checkout.googlepay.data.api.CheckoutService
-import com.example.adyen.checkout.googlepay.data.api.safeApiCall
-import com.example.adyen.checkout.googlepay.data.model.SessionApiModel
-import com.example.adyen.checkout.googlepay.data.provider.CheckoutServiceProvider
-import java.util.Locale
+import com.example.adyen.checkout.googlepay.data.model.GooglePaySession
+import com.example.adyen.checkout.googlepay.data.repository.CheckoutRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class GooglePayViewModel(
-    private val checkoutService: CheckoutService = CheckoutServiceProvider.getService(),
+    private val checkoutRepository: CheckoutRepository = CheckoutRepository(),
 ) : ViewModel() {
 
     private val _googlePayViewState = MutableStateFlow<GooglePayViewState>(GooglePayViewState.Loading)
@@ -39,15 +35,15 @@ class GooglePayViewModel(
     }
 
     private suspend fun checkGooglePayAvailability() {
-        val sessionApiModel = getSessionFromNetwork()
-        if (sessionApiModel == null) {
+        val googlePaySession = checkoutRepository.fetchGooglePaySession()
+        if (googlePaySession == null) {
             _googlePayViewState.emit(GooglePayViewState.ShowStatusText(R.string.error_google_pay))
             return
         }
 
-        val googlePayConfiguration = getGooglePayConfiguration(sessionApiModel)
+        val googlePayConfiguration = getGooglePayConfiguration(googlePaySession)
 
-        val checkoutSession = getCheckoutSession(sessionApiModel, googlePayConfiguration)
+        val checkoutSession = getCheckoutSession(googlePaySession, googlePayConfiguration)
         if (checkoutSession == null) {
             _googlePayViewState.emit(GooglePayViewState.ShowStatusText(R.string.error_google_pay))
             return
@@ -67,26 +63,20 @@ class GooglePayViewModel(
         )
     }
 
-    private suspend fun getSessionFromNetwork(): SessionApiModel? {
-        return safeApiCall {
-            checkoutService.getSession()
-        }
-    }
-
-    private fun getGooglePayConfiguration(sessionApiModel: SessionApiModel): GooglePayConfiguration {
+    private fun getGooglePayConfiguration(googlePaySession: GooglePaySession): GooglePayConfiguration {
         return GooglePayConfiguration.Builder(
-            shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
-            environment = sessionApiModel.environment.mapToEnvironment(),
-            clientKey = sessionApiModel.clientSecret
+            shopperLocale = googlePaySession.shopperLocale,
+            environment = googlePaySession.environment,
+            clientKey = googlePaySession.clientSecret
         )
-            .setMerchantInfo(MerchantInfo(merchantName = "Test merchant"))
+            .setMerchantInfo(googlePaySession.merchantInfo)
             .build()
     }
 
-    private suspend fun getCheckoutSession(sessionApiModel: SessionApiModel, googlePayConfiguration: GooglePayConfiguration): CheckoutSession? {
+    private suspend fun getCheckoutSession(googlePaySession: GooglePaySession, googlePayConfiguration: GooglePayConfiguration): CheckoutSession? {
         val sessionModel = SessionModel(
-            id = sessionApiModel.id,
-            sessionData = sessionApiModel.sessionData,
+            id = googlePaySession.sessionId,
+            sessionData = googlePaySession.sessionData,
         )
 
         return when (val result = CheckoutSessionProvider.createSession(sessionModel, googlePayConfiguration)) {
@@ -102,12 +92,6 @@ class GooglePayViewModel(
         } else {
             _googlePayViewState.value = GooglePayViewState.ShowStatusText(R.string.error_google_pay_unavailable)
 
-        }
-    }
-
-    fun onGooglePayButtonClicked() {
-        viewModelScope.launch {
-            _events.emit(GooglePayEvent.StartGooglePay)
         }
     }
 

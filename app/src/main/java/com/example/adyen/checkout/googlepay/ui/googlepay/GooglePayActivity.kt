@@ -56,7 +56,7 @@ class GooglePayActivity : AppCompatActivity(),
         )
 
         binding.payButton.setOnClickListener {
-            googlePayViewModel.onGooglePayButtonClicked()
+            googlePayComponent?.startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
         }
     }
 
@@ -102,10 +102,6 @@ class GooglePayActivity : AppCompatActivity(),
                     googlePayEvent.configuration,
                 )
             }
-
-            GooglePayEvent.StartGooglePay -> {
-                googlePayComponent?.startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
-            }
         }
     }
 
@@ -139,7 +135,6 @@ class GooglePayActivity : AppCompatActivity(),
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != GOOGLE_PAY_REQUEST_CODE) return
         googlePayComponent?.handleActivityResult(resultCode, data)
-
     }
 
     companion object {
