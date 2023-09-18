@@ -27,7 +27,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Message about the payment status" />
+        tools:text="Payment successful"
+        tools:visibility="visible" />
 
     <com.google.android.gms.wallet.button.PayButton
         android:id="@+id/pay_button"
