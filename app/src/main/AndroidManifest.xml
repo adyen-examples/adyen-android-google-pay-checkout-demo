@@ -13,18 +13,6 @@
         android:theme="@style/Theme.GooglePayCheckoutExample"
         tools:targetApi="34">
 
-        <activity
-            android:name=".ui.googlepay.GooglePayActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
-
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
     </application>
 
 </manifest>
