@@ -1,4 +1,4 @@
-package com.example.adyen.checkout.googlepay.ui.googlepay
+package com.example.adyen.checkout.googlepay.ui.checkout
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,13 +8,10 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.adyen.checkout.components.core.ComponentAvailableCallback
 import com.adyen.checkout.components.core.ComponentError
-import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.components.core.action.Action
 import com.adyen.checkout.googlepay.GooglePayComponent
 import com.adyen.checkout.googlepay.GooglePayComponentState
-import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.sessions.core.SessionComponentCallback
 import com.adyen.checkout.sessions.core.SessionPaymentResult
 import com.example.adyen.checkout.googlepay.databinding.ActivityGooglePayBinding
@@ -22,15 +19,15 @@ import com.google.android.gms.wallet.button.ButtonConstants
 import com.google.android.gms.wallet.button.ButtonOptions
 import kotlinx.coroutines.launch
 
-class GooglePayActivity : AppCompatActivity(),
-    SessionComponentCallback<GooglePayComponentState>,
-    ComponentAvailableCallback {
+class CheckoutActivity :
+    AppCompatActivity(),
+    SessionComponentCallback<GooglePayComponentState> {
 
     private lateinit var binding: ActivityGooglePayBinding
 
     private var googlePayComponent: GooglePayComponent? = null
 
-    private val googlePayViewModel: GooglePayViewModel by viewModels()
+    private val mCheckoutViewModel: CheckoutViewModel by viewModels { CheckoutViewModelProvider(application) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,8 +38,7 @@ class GooglePayActivity : AppCompatActivity(),
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch { googlePayViewModel.googlePayViewState.collect(::onViewState) }
-                launch { googlePayViewModel.events.collect(::onEvent) }
+                launch { mCheckoutViewModel.checkoutState.collect(::onViewState) }
             }
         }
     }
@@ -56,30 +52,30 @@ class GooglePayActivity : AppCompatActivity(),
         )
 
         binding.payButton.setOnClickListener {
-            googlePayComponent?.startGooglePayScreen(this@GooglePayActivity, GOOGLE_PAY_REQUEST_CODE)
+            googlePayComponent?.startGooglePayScreen(this@CheckoutActivity, GOOGLE_PAY_REQUEST_CODE)
         }
     }
 
-    private fun onViewState(googlePayViewState: GooglePayViewState) {
-        when (googlePayViewState) {
-            is GooglePayViewState.LoadComponent -> {
+    private fun onViewState(checkoutState: CheckoutState) {
+        when (checkoutState) {
+            is CheckoutState.LoadComponent -> {
                 binding.progressIndicator.isVisible = false
                 binding.statusTextView.isVisible = false
                 binding.payButton.isVisible = true
-                loadComponent(googlePayViewState.googlePayComponentData)
+                loadComponent(checkoutState.googlePayComponentData)
             }
 
-            is GooglePayViewState.Loading -> {
+            is CheckoutState.Loading -> {
                 binding.progressIndicator.isVisible = true
                 binding.statusTextView.isVisible = false
                 binding.payButton.isVisible = false
             }
 
-            is GooglePayViewState.ShowStatusText -> {
+            is CheckoutState.ShowStatusText -> {
                 binding.statusTextView.isVisible = true
                 binding.progressIndicator.isVisible = false
                 binding.payButton.isVisible = false
-                binding.statusTextView.setText(googlePayViewState.textResId)
+                binding.statusTextView.setText(checkoutState.textResId)
             }
         }
     }
@@ -94,36 +90,12 @@ class GooglePayActivity : AppCompatActivity(),
         )
     }
 
-    private fun onEvent(googlePayEvent: GooglePayEvent) {
-        when (googlePayEvent) {
-            is GooglePayEvent.CheckGooglePayAvailability -> {
-                checkAvailability(
-                    googlePayEvent.paymentMethod,
-                    googlePayEvent.configuration,
-                )
-            }
-        }
-    }
-
-    private fun checkAvailability(paymentMethod: PaymentMethod, googlePayConfiguration: GooglePayConfiguration) {
-        GooglePayComponent.PROVIDER.isAvailable(
-            applicationContext = application,
-            paymentMethod = paymentMethod,
-            configuration = googlePayConfiguration,
-            callback = this,
-        )
-    }
-
-    override fun onAvailabilityResult(isAvailable: Boolean, paymentMethod: PaymentMethod) {
-        googlePayViewModel.onGooglePayAvailabilityResult(isAvailable)
-    }
-
     override fun onFinished(result: SessionPaymentResult) {
-        googlePayViewModel.onComponentFinished(result)
+        mCheckoutViewModel.onComponentFinished(result)
     }
 
     override fun onError(componentError: ComponentError) {
-        googlePayViewModel.onComponentError(componentError)
+        mCheckoutViewModel.onComponentError(componentError)
     }
 
     override fun onAction(action: Action) {

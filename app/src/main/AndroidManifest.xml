@@ -14,7 +14,7 @@
         tools:targetApi="34">
 
         <activity
-            android:name=".ui.googlepay.GooglePayActivity"
+            android:name=".ui.checkout.CheckoutActivity"
             android:exported="true"
             android:launchMode="singleTop">
 

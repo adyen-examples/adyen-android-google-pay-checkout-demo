@@ -1,4 +1,4 @@
-package com.example.adyen.checkout.googlepay.ui.googlepay
+package com.example.adyen.checkout.googlepay.ui.checkout
 
 import org.json.JSONArray
 import org.json.JSONObject

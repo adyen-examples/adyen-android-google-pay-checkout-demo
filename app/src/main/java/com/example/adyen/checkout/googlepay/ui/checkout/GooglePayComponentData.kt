@@ -1,4 +1,4 @@
-package com.example.adyen.checkout.googlepay.ui.googlepay
+package com.example.adyen.checkout.googlepay.ui.checkout
 
 import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.googlepay.GooglePayConfiguration
