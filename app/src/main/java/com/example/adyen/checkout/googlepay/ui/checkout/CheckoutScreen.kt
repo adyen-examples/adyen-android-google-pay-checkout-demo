@@ -1,7 +1,6 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
 import android.app.Activity
-import android.app.Application
 import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
@@ -19,11 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.adyen.checkout.components.compose.get
-import com.adyen.checkout.components.core.ComponentAvailableCallback
-import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.components.core.action.Action
 import com.adyen.checkout.googlepay.GooglePayComponent
-import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.google.pay.button.ButtonTheme
 import com.google.pay.button.ButtonType
 import com.google.pay.button.PayButton
@@ -41,16 +37,7 @@ fun CheckoutScreen(
         when (val checkoutUIState = state.checkoutUIState) {
             is CheckoutUIState.LoadingSpinner -> LoadingSpinner()
             is CheckoutUIState.StatusText -> StatusText(checkoutUIState.textResId)
-            is CheckoutUIState.GooglePayCheckoutUI -> GooglePayButton(checkoutUIState.googlePayComponentData)
-        }
-
-        state.checkGooglePayAvailability?.let {
-            CheckAvailability(
-                paymentMethod = it.paymentMethod,
-                googlePayConfiguration = it.configuration,
-                callback = it.callback,
-                onFinished = viewModel::availabilityChecked
-            )
+            is CheckoutUIState.GooglePayButton -> GooglePayButton(checkoutUIState.googlePayComponentData)
         }
 
         state.handleActivityResult?.let {
@@ -97,22 +84,6 @@ fun GooglePayButton(googlePayComponentData: GooglePayComponentData) {
         theme = ButtonTheme.Dark,
         type = ButtonType.Pay,
     )
-}
-
-@Composable
-private fun CheckAvailability(
-    paymentMethod: PaymentMethod,
-    googlePayConfiguration: GooglePayConfiguration,
-    callback: ComponentAvailableCallback,
-    onFinished: () -> Unit,
-) {
-    GooglePayComponent.PROVIDER.isAvailable(
-        applicationContext = LocalContext.current.applicationContext as Application,
-        paymentMethod = paymentMethod,
-        configuration = googlePayConfiguration,
-        callback = callback,
-    )
-    onFinished()
 }
 
 @Composable

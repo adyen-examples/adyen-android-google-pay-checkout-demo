@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class CheckoutActivity : AppCompatActivity() {
 
-    private val checkoutViewModel: CheckoutViewModel by viewModels()
+    private val checkoutViewModel: CheckoutViewModel by viewModels { CheckoutViewModelFactory(application) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

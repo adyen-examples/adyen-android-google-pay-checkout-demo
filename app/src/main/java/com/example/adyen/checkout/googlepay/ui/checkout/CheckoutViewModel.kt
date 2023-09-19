@@ -1,13 +1,15 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
+import android.app.Application
 import android.content.Intent
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.checkout.components.core.ComponentAvailableCallback
 import com.adyen.checkout.components.core.ComponentError
 import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.components.core.PaymentMethodTypes
 import com.adyen.checkout.components.core.action.Action
+import com.adyen.checkout.googlepay.GooglePayComponent
 import com.adyen.checkout.googlepay.GooglePayComponentState
 import com.adyen.checkout.googlepay.GooglePayConfiguration
 import com.adyen.checkout.sessions.core.CheckoutSession
@@ -26,8 +28,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class CheckoutViewModel(
-    private val checkoutRepository: CheckoutRepository = CheckoutRepository(),
-) : ViewModel(),
+    application: Application,
+    private val checkoutRepository: CheckoutRepository,
+) : AndroidViewModel(application),
     SessionComponentCallback<GooglePayComponentState>,
     ComponentAvailableCallback {
 
@@ -37,10 +40,10 @@ class CheckoutViewModel(
     private var googlePayComponentData: GooglePayComponentData? = null
 
     init {
-        viewModelScope.launch { checkGooglePayAvailability() }
+        viewModelScope.launch { initGooglePay() }
     }
 
-    private suspend fun checkGooglePayAvailability() {
+    private suspend fun initGooglePay() {
         val googlePaySession = checkoutRepository.fetchGooglePaySession()
         if (googlePaySession == null) {
             _checkoutState.update { currentState ->
@@ -66,9 +69,7 @@ class CheckoutViewModel(
             return
         }
 
-        _checkoutState.update { currentState ->
-            currentState.copy(checkGooglePayAvailability = CheckGooglePayAvailability(paymentMethod, googlePayConfiguration, this))
-        }
+        checkGooglePayAvailability(paymentMethod, googlePayConfiguration)
 
         googlePayComponentData = GooglePayComponentData(
             checkoutSession = checkoutSession,
@@ -77,6 +78,15 @@ class CheckoutViewModel(
             componentCallback = this,
             key = GOOGLE_PAY_COMPONENT_KEY,
             requestCode = GOOGLE_PAY_REQUEST_CODE,
+        )
+    }
+
+    private fun checkGooglePayAvailability(paymentMethod: PaymentMethod, googlePayConfiguration: GooglePayConfiguration) {
+        GooglePayComponent.PROVIDER.isAvailable(
+            applicationContext = getApplication(),
+            paymentMethod = paymentMethod,
+            configuration = googlePayConfiguration,
+            callback = this,
         )
     }
 
@@ -106,7 +116,7 @@ class CheckoutViewModel(
         if (isAvailable) {
             val googlePayComponentData = googlePayComponentData ?: return
             _checkoutState.update { currentState ->
-                currentState.copy(checkoutUIState = CheckoutUIState.GooglePayCheckoutUI(googlePayComponentData))
+                currentState.copy(checkoutUIState = CheckoutUIState.GooglePayButton(googlePayComponentData))
             }
         } else {
             _checkoutState.update { currentState ->
@@ -140,12 +150,6 @@ class CheckoutViewModel(
         val googlePayComponentData = googlePayComponentData ?: return
         _checkoutState.update { currentState ->
             currentState.copy(handleActivityResult = HandleActivityResult(resultCode, data, googlePayComponentData))
-        }
-    }
-
-    fun availabilityChecked() {
-        _checkoutState.update { currentState ->
-            currentState.copy(checkGooglePayAvailability = null)
         }
     }
 
