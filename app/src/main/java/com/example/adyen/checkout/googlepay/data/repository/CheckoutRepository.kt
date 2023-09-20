@@ -17,7 +17,7 @@ class CheckoutRepository(
             GooglePaySession(
                 sessionId = id,
                 sessionData = sessionData,
-                clientSecret = clientSecret,
+                clientKey = clientSecret,
                 environment = environment.mapToEnvironment(),
                 shopperLocale = Locale.forLanguageTag(sessionApiModel.shopperLocale),
                 merchantInfo = MerchantInfo(merchantName = merchantName),

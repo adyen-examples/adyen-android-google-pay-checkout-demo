@@ -94,7 +94,7 @@ class CheckoutViewModel(
         return GooglePayConfiguration.Builder(
             shopperLocale = googlePaySession.shopperLocale,
             environment = googlePaySession.environment,
-            clientKey = googlePaySession.clientSecret
+            clientKey = googlePaySession.clientKey
         )
             .setMerchantInfo(googlePaySession.merchantInfo)
             .build()

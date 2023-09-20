@@ -7,7 +7,7 @@ import java.util.Locale
 data class GooglePaySession(
     val sessionId: String,
     val sessionData: String,
-    val clientSecret: String,
+    val clientKey: String,
     val environment: Environment,
     val shopperLocale: Locale,
     val merchantInfo: MerchantInfo,
