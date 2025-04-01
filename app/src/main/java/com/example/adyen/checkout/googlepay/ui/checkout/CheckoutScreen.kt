@@ -1,7 +1,6 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
-import android.app.Activity
-import android.content.Intent
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,16 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.adyen.checkout.components.compose.AdyenComponent
 import com.adyen.checkout.components.compose.get
 import com.adyen.checkout.components.core.action.Action
 import com.adyen.checkout.googlepay.GooglePayComponent
-import com.google.pay.button.ButtonTheme
-import com.google.pay.button.ButtonType
-import com.google.pay.button.PayButton
 
 @Composable
 fun CheckoutScreen(
@@ -37,16 +33,7 @@ fun CheckoutScreen(
         when (val checkoutUIState = state.checkoutUIState) {
             is CheckoutUIState.LoadingSpinner -> LoadingSpinner()
             is CheckoutUIState.StatusText -> StatusText(checkoutUIState.textResId)
-            is CheckoutUIState.GooglePayButton -> GooglePayButton(checkoutUIState.googlePayComponentData)
-        }
-
-        state.handleActivityResult?.let {
-            HandleActivityResult(
-                resultCode = it.resultCode,
-                data = it.data,
-                googlePayComponentData = it.googlePayComponentData,
-                onFinished = viewModel::activityResultHandled
-            )
+            is CheckoutUIState.GooglePayComponent -> GooglePayComponent(checkoutUIState.googlePayComponentData)
         }
 
         state.handleAction?.let {
@@ -74,28 +61,9 @@ fun StatusText(@StringRes textResId: Int) {
 }
 
 @Composable
-fun GooglePayButton(googlePayComponentData: GooglePayComponentData) {
+fun GooglePayComponent(googlePayComponentData: GooglePayComponentData) {
     val googlePayComponent = getGooglePayComponent(googlePayComponentData)
-    val activity = LocalContext.current as Activity
-
-    PayButton(
-        onClick = { googlePayComponent.startGooglePayScreen(activity, googlePayComponentData.requestCode) },
-        allowedPaymentMethods = GooglePayUtils.getAllowedPaymentMethods(),
-        theme = ButtonTheme.Dark,
-        type = ButtonType.Pay,
-    )
-}
-
-@Composable
-private fun HandleActivityResult(
-    resultCode: Int,
-    data: Intent?,
-    googlePayComponentData: GooglePayComponentData,
-    onFinished: () -> Unit,
-) {
-    val googlePayComponent = getGooglePayComponent(googlePayComponentData)
-    googlePayComponent.handleActivityResult(resultCode, data)
-    onFinished()
+    AdyenComponent(googlePayComponent)
 }
 
 @Composable
@@ -105,7 +73,7 @@ private fun HandleAction(
     onFinished: () -> Unit,
 ) {
     val googlePayComponent = getGooglePayComponent(googlePayComponentData)
-    val activity = LocalContext.current as Activity
+    val activity = LocalActivity.current ?: return
     googlePayComponent.handleAction(action, activity)
     onFinished()
 }
@@ -116,7 +84,7 @@ private fun getGooglePayComponent(googlePayComponentData: GooglePayComponentData
         GooglePayComponent.PROVIDER.get(
             checkoutSession = checkoutSession,
             paymentMethod = paymentMethod,
-            configuration = googlePayConfiguration,
+            checkoutConfiguration = checkoutConfiguration,
             componentCallback = componentCallback,
             key = key,
         )

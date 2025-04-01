@@ -1,6 +1,5 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -17,11 +16,5 @@ class CheckoutActivity : AppCompatActivity() {
                 viewModel = checkoutViewModel,
             )
         }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        checkoutViewModel.onActivityResult(requestCode, resultCode, data)
     }
 }

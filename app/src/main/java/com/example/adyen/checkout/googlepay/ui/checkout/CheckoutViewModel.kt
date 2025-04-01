@@ -1,17 +1,14 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
 import android.app.Application
-import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.adyen.checkout.components.core.ComponentAvailableCallback
+import com.adyen.checkout.components.core.CheckoutConfiguration
 import com.adyen.checkout.components.core.ComponentError
-import com.adyen.checkout.components.core.PaymentMethod
 import com.adyen.checkout.components.core.PaymentMethodTypes
 import com.adyen.checkout.components.core.action.Action
-import com.adyen.checkout.googlepay.GooglePayComponent
 import com.adyen.checkout.googlepay.GooglePayComponentState
-import com.adyen.checkout.googlepay.GooglePayConfiguration
+import com.adyen.checkout.googlepay.googlePay
 import com.adyen.checkout.sessions.core.CheckoutSession
 import com.adyen.checkout.sessions.core.CheckoutSessionProvider
 import com.adyen.checkout.sessions.core.CheckoutSessionResult
@@ -31,8 +28,7 @@ class CheckoutViewModel(
     application: Application,
     private val checkoutRepository: CheckoutRepository,
 ) : AndroidViewModel(application),
-    SessionComponentCallback<GooglePayComponentState>,
-    ComponentAvailableCallback {
+    SessionComponentCallback<GooglePayComponentState> {
 
     private val _checkoutState = MutableStateFlow(CheckoutState())
     val checkoutState: StateFlow<CheckoutState> = _checkoutState.asStateFlow()
@@ -52,9 +48,9 @@ class CheckoutViewModel(
             return
         }
 
-        val googlePayConfiguration = getGooglePayConfiguration(googlePaySession)
+        val checkoutConfiguration = getCheckoutConfiguration(googlePaySession)
 
-        val checkoutSession = getCheckoutSession(googlePaySession, googlePayConfiguration)
+        val checkoutSession = getCheckoutSession(googlePaySession, checkoutConfiguration)
         if (checkoutSession == null) {
             _checkoutState.update { currentState ->
                 currentState.copy(checkoutUIState = CheckoutUIState.StatusText(R.string.error_google_pay))
@@ -69,60 +65,50 @@ class CheckoutViewModel(
             return
         }
 
-        checkGooglePayAvailability(paymentMethod, googlePayConfiguration)
-
-        googlePayComponentData = GooglePayComponentData(
+        val googlePayComponentData = GooglePayComponentData(
             checkoutSession = checkoutSession,
             paymentMethod = paymentMethod,
-            googlePayConfiguration = googlePayConfiguration,
+            checkoutConfiguration = checkoutConfiguration,
             componentCallback = this,
             key = GOOGLE_PAY_COMPONENT_KEY,
             requestCode = GOOGLE_PAY_REQUEST_CODE,
         )
+        this.googlePayComponentData = googlePayComponentData
+        _checkoutState.update { currentState ->
+            currentState.copy(
+                checkoutUIState = CheckoutUIState.GooglePayComponent(
+                    googlePayComponentData
+                )
+            )
+        }
     }
 
-    private fun checkGooglePayAvailability(paymentMethod: PaymentMethod, googlePayConfiguration: GooglePayConfiguration) {
-        GooglePayComponent.PROVIDER.isAvailable(
-            applicationContext = getApplication(),
-            paymentMethod = paymentMethod,
-            configuration = googlePayConfiguration,
-            callback = this,
-        )
-    }
-
-    private fun getGooglePayConfiguration(googlePaySession: GooglePaySession): GooglePayConfiguration {
-        return GooglePayConfiguration.Builder(
+    private fun getCheckoutConfiguration(googlePaySession: GooglePaySession): CheckoutConfiguration {
+        return CheckoutConfiguration(
             shopperLocale = googlePaySession.shopperLocale,
             environment = googlePaySession.environment,
             clientKey = googlePaySession.clientKey
-        )
-            .setMerchantInfo(googlePaySession.merchantInfo)
-            .build()
+        ) {
+            googlePay {
+                setSubmitButtonVisible(true)
+                setMerchantInfo(googlePaySession.merchantInfo)
+            }
+        }
     }
 
-    private suspend fun getCheckoutSession(googlePaySession: GooglePaySession, googlePayConfiguration: GooglePayConfiguration): CheckoutSession? {
+    private suspend fun getCheckoutSession(
+        googlePaySession: GooglePaySession,
+        checkoutConfiguration: CheckoutConfiguration
+    ): CheckoutSession? {
         val sessionModel = SessionModel(
             id = googlePaySession.sessionId,
             sessionData = googlePaySession.sessionData,
         )
 
-        return when (val result = CheckoutSessionProvider.createSession(sessionModel, googlePayConfiguration)) {
+        return when (val result =
+            CheckoutSessionProvider.createSession(sessionModel, checkoutConfiguration)) {
             is CheckoutSessionResult.Success -> result.checkoutSession
             is CheckoutSessionResult.Error -> null
-        }
-    }
-
-    override fun onAvailabilityResult(isAvailable: Boolean, paymentMethod: PaymentMethod) {
-        if (isAvailable) {
-            val googlePayComponentData = googlePayComponentData ?: return
-            _checkoutState.update { currentState ->
-                currentState.copy(checkoutUIState = CheckoutUIState.GooglePayButton(googlePayComponentData))
-            }
-        } else {
-            _checkoutState.update { currentState ->
-                currentState.copy(checkoutUIState = CheckoutUIState.StatusText(R.string.error_google_pay_unavailable))
-            }
-
         }
     }
 
@@ -145,23 +131,9 @@ class CheckoutViewModel(
         }
     }
 
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode != GOOGLE_PAY_REQUEST_CODE) return
-        val googlePayComponentData = googlePayComponentData ?: return
-        _checkoutState.update { currentState ->
-            currentState.copy(handleActivityResult = HandleActivityResult(resultCode, data, googlePayComponentData))
-        }
-    }
-
     fun actionHandled() {
         _checkoutState.update { currentState ->
             currentState.copy(handleAction = null)
-        }
-    }
-
-    fun activityResultHandled() {
-        _checkoutState.update { currentState ->
-            currentState.copy(handleActivityResult = null)
         }
     }
 
