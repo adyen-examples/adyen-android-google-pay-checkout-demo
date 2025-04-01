@@ -8,6 +8,7 @@ import com.adyen.checkout.components.core.ComponentError
 import com.adyen.checkout.components.core.PaymentMethodTypes
 import com.adyen.checkout.components.core.action.Action
 import com.adyen.checkout.googlepay.GooglePayComponentState
+import com.adyen.checkout.googlepay.GooglePayUnavailableException
 import com.adyen.checkout.googlepay.googlePay
 import com.adyen.checkout.sessions.core.CheckoutSession
 import com.adyen.checkout.sessions.core.CheckoutSessionProvider
@@ -126,7 +127,12 @@ class CheckoutViewModel(
 
     override fun onError(componentError: ComponentError) {
         _checkoutState.update { currentState ->
-            currentState.copy(checkoutUIState = CheckoutUIState.StatusText(R.string.error_google_pay))
+            val exception = componentError.exception
+            if (exception is GooglePayUnavailableException) {
+                currentState.copy(checkoutUIState = CheckoutUIState.StatusText(R.string.error_google_pay_unavailable))
+            } else {
+                currentState.copy(checkoutUIState = CheckoutUIState.StatusText(R.string.error_google_pay))
+            }
         }
     }
 
