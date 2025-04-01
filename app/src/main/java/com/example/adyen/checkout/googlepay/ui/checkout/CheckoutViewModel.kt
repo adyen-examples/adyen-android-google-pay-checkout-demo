@@ -71,7 +71,6 @@ class CheckoutViewModel(
             checkoutConfiguration = checkoutConfiguration,
             componentCallback = this,
             key = GOOGLE_PAY_COMPONENT_KEY,
-            requestCode = GOOGLE_PAY_REQUEST_CODE,
         )
         this.googlePayComponentData = googlePayComponentData
         _checkoutState.update { currentState ->
@@ -139,6 +138,5 @@ class CheckoutViewModel(
 
     companion object {
         private const val GOOGLE_PAY_COMPONENT_KEY = "CheckoutScreen"
-        private const val GOOGLE_PAY_REQUEST_CODE = 1
     }
 }
