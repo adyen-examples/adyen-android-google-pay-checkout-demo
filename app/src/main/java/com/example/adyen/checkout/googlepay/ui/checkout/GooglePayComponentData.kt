@@ -12,5 +12,4 @@ data class GooglePayComponentData(
     val checkoutConfiguration: CheckoutConfiguration,
     val componentCallback: SessionComponentCallback<GooglePayComponentState>,
     val key: String,
-    val requestCode: Int,
 )
