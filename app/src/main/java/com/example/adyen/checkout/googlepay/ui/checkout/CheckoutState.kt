@@ -1,11 +1,13 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
+import android.content.Intent
 import androidx.annotation.StringRes
 import com.adyen.checkout.components.core.action.Action
 
 data class CheckoutState(
     val checkoutUIState: CheckoutUIState = CheckoutUIState.LoadingSpinner,
     val handleAction: HandleAction? = null,
+    val handleIntent: HandleIntent? = null,
 )
 
 sealed class CheckoutUIState {
@@ -17,3 +19,5 @@ sealed class CheckoutUIState {
 }
 
 data class HandleAction(val action: Action, val googlePayComponentData: GooglePayComponentData)
+
+data class HandleIntent(val intent: Intent, val googlePayComponentData: GooglePayComponentData)

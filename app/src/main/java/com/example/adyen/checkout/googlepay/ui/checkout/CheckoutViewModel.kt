@@ -1,6 +1,7 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
 import android.app.Application
+import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.adyen.checkout.components.core.CheckoutConfiguration
@@ -139,6 +140,19 @@ class CheckoutViewModel(
     fun actionHandled() {
         _checkoutState.update { currentState ->
             currentState.copy(handleAction = null)
+        }
+    }
+
+    fun handleIntent(intent: Intent) {
+        val googlePayComponentData = googlePayComponentData ?: return
+        _checkoutState.update { currentState ->
+            currentState.copy(handleIntent = HandleIntent(intent, googlePayComponentData))
+        }
+    }
+
+    fun intentHandled() {
+        _checkoutState.update { currentState ->
+            currentState.copy(handleIntent = null)
         }
     }
 

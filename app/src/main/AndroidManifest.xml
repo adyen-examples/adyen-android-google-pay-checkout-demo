@@ -23,6 +23,20 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- The intent filter for Components can be configured with any values as long as the `returnUrl` sent to the backend matches it. -->
+            <!-- In this case the `returnUrl` should be `adyencheckout://your.application.id/googlepay`. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="${applicationId}"
+                    android:path="/googlepay"
+                    android:scheme="adyencheckout" />
+            </intent-filter>
         </activity>
 
     </application>

@@ -1,5 +1,6 @@
 package com.example.adyen.checkout.googlepay.ui.checkout
 
+import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
@@ -43,6 +44,14 @@ fun CheckoutScreen(
                 onFinished = viewModel::actionHandled
             )
         }
+
+        state.handleIntent?.let {
+            HandleIntent(
+                intent = it.intent,
+                googlePayComponentData = it.googlePayComponentData,
+                onFinished = viewModel::intentHandled
+            )
+        }
     }
 }
 
@@ -75,6 +84,17 @@ private fun HandleAction(
     val googlePayComponent = getGooglePayComponent(googlePayComponentData)
     val activity = LocalActivity.current ?: return
     googlePayComponent.handleAction(action, activity)
+    onFinished()
+}
+
+@Composable
+private fun HandleIntent(
+    intent: Intent,
+    googlePayComponentData: GooglePayComponentData,
+    onFinished: () -> Unit,
+) {
+    val googlePayComponent = getGooglePayComponent(googlePayComponentData)
+    googlePayComponent.handleIntent(intent)
     onFinished()
 }
 
